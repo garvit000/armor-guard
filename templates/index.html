@@ -3,109 +3,197 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="ArmorGuard AI — Intent-aware autonomous paper trading with policy-enforced security. Built for the ArmorIQ x OpenClaw financial security track." />
-  <title>ArmorGuard AI — Secure Paper Trading</title>
+  <meta name="description" content="ArmorGuard AI — Intent-aware autonomous paper trading with policy-enforced security. ArmorIQ x OpenClaw financial security track." />
+  <title>ArmorGuard AI</title>
   <link rel="stylesheet" href="/static/style.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
 </head>
 <body>
-  <div class="app">
 
-    <!-- ── Header ──────────────────────────────────────────────────── -->
-    <header class="header">
-      <div class="header__logo">
-        <div class="header__icon">🛡️</div>
-        <h1 class="header__title">ArmorGuard AI</h1>
-      </div>
-      <p class="header__sub">Intent-Aware Autonomous Paper Trading · Policy-Enforced Security</p>
-      <span class="header__badge">ArmorIQ × OpenClaw Track</span>
-    </header>
-
-    <!-- ── Architecture Flow ───────────────────────────────────────── -->
-    <section class="arch">
-      <div class="arch__title">Pipeline Architecture</div>
-      <div class="arch__flow">
-        <span class="arch__node arch__node--ui">🖥️ Flask UI</span>
-        <span class="arch__arrow">→</span>
-        <span class="arch__node arch__node--agent">🤖 OpenClaw Agent</span>
-        <span class="arch__arrow">→</span>
-        <span class="arch__node arch__node--policy">🔒 Policy Engine</span>
-        <span class="arch__arrow">→</span>
-        <span class="arch__node arch__node--trade">📈 Paper Trader</span>
-      </div>
-    </section>
-
-    <!-- ── Input ───────────────────────────────────────────────────── -->
-    <section class="input-section" id="input-section">
-      <label class="input-section__label" for="command-input">Natural Language Command</label>
-      <div class="input-section__row">
-        <input
-          id="command-input"
-          class="input-section__field"
-          type="text"
-          placeholder='e.g. "buy 1 NVDA"'
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <button id="send-btn" class="input-section__btn" type="button">
-          Execute ⚡
-        </button>
-      </div>
-      <p class="input-section__hint">
-        Try: <code>buy 1 NVDA</code> · <code>buy 100 NVDA</code> · <code>buy 1 TSLA</code>
-      </p>
-      <div class="quick-actions">
-        <button class="quick-actions__chip" data-cmd="buy 1 NVDA">buy 1 NVDA</button>
-        <button class="quick-actions__chip" data-cmd="buy 100 NVDA">buy 100 NVDA</button>
-        <button class="quick-actions__chip" data-cmd="buy 1 TSLA">buy 1 TSLA</button>
-        <button class="quick-actions__chip" data-cmd="sell 2 AAPL">sell 2 AAPL</button>
-        <button class="quick-actions__chip" data-cmd="buy 1 MSFT">buy 1 MSFT</button>
-      </div>
-    </section>
-
-    <!-- ── Latest Result ───────────────────────────────────────────── -->
-    <div id="result-container"></div>
-
-    <!-- ── Activity Log ────────────────────────────────────────────── -->
-    <section class="activity" id="activity-section">
-      <div class="activity__title"><span class="icon">📋</span> Activity Log</div>
-      <div id="activity-list" class="activity__empty">No trades yet — enter a command above.</div>
-    </section>
+  <!-- ── Ticker tape ──────────────────────────────────────────── -->
+  <div class="ticker-tape">
+    <div class="ticker-tape__inner" id="tape">
+      <span class="tick"><span class="tick__sym">NVDA</span><span class="tick__val">924.79</span><span class="tick__up">+2.14%</span></span>
+      <span class="tick"><span class="tick__sym">AAPL</span><span class="tick__val">178.72</span><span class="tick__down">-0.43%</span></span>
+      <span class="tick"><span class="tick__sym">MSFT</span><span class="tick__val">420.55</span><span class="tick__up">+1.07%</span></span>
+      <span class="tick"><span class="tick__sym">SPY</span><span class="tick__val">524.30</span><span class="tick__up">+0.31%</span></span>
+      <span class="tick"><span class="tick__sym">QQQ</span><span class="tick__val">447.18</span><span class="tick__up">+0.56%</span></span>
+      <span class="tick"><span class="tick__sym">VIX</span><span class="tick__val">18.22</span><span class="tick__down">-1.90%</span></span>
+      <span class="tick"><span class="tick__sym">BTC</span><span class="tick__val">68,410</span><span class="tick__up">+3.22%</span></span>
+      <!-- duplicate for seamless loop -->
+      <span class="tick"><span class="tick__sym">NVDA</span><span class="tick__val">924.79</span><span class="tick__up">+2.14%</span></span>
+      <span class="tick"><span class="tick__sym">AAPL</span><span class="tick__val">178.72</span><span class="tick__down">-0.43%</span></span>
+      <span class="tick"><span class="tick__sym">MSFT</span><span class="tick__val">420.55</span><span class="tick__up">+1.07%</span></span>
+      <span class="tick"><span class="tick__sym">SPY</span><span class="tick__val">524.30</span><span class="tick__up">+0.31%</span></span>
+      <span class="tick"><span class="tick__sym">QQQ</span><span class="tick__val">447.18</span><span class="tick__up">+0.56%</span></span>
+      <span class="tick"><span class="tick__sym">VIX</span><span class="tick__val">18.22</span><span class="tick__down">-1.90%</span></span>
+      <span class="tick"><span class="tick__sym">BTC</span><span class="tick__val">68,410</span><span class="tick__up">+3.22%</span></span>
+    </div>
   </div>
 
-  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────── -->
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">
+          <div class="sidebar__logo-icon">AG</div>
+          ArmorGuard AI
+        </div>
+        <div class="sidebar__track">ArmorIQ × OpenClaw Track</div>
+      </div>
+
+      <div class="watchlist">
+        <div class="watchlist__title">Allowed Tickers</div>
+        <div class="watchlist__row">
+          <div>
+            <div class="watchlist__sym">NVDA</div>
+            <div class="watchlist__price">$924.79</div>
+          </div>
+          <div class="watchlist__change watchlist__change--up">+2.14%</div>
+        </div>
+        <div class="watchlist__row">
+          <div>
+            <div class="watchlist__sym">AAPL</div>
+            <div class="watchlist__price">$178.72</div>
+          </div>
+          <div class="watchlist__change watchlist__change--down">-0.43%</div>
+        </div>
+        <div class="watchlist__row">
+          <div>
+            <div class="watchlist__sym">MSFT</div>
+            <div class="watchlist__price">$420.55</div>
+          </div>
+          <div class="watchlist__change watchlist__change--up">+1.07%</div>
+        </div>
+      </div>
+
+      <div class="policy-summary">
+        <div class="policy-summary__title">Policy Rules</div>
+        <div class="policy-rule">
+          <span class="policy-rule__icon">▸</span>
+          <span class="policy-rule__text">Tickers: NVDA, AAPL, MSFT only</span>
+        </div>
+        <div class="policy-rule">
+          <span class="policy-rule__icon">▸</span>
+          <span class="policy-rule__text">Max qty per trade: 2</span>
+        </div>
+        <div class="policy-rule">
+          <span class="policy-rule__icon">▸</span>
+          <span class="policy-rule__text">Actions: BUY, SELL</span>
+        </div>
+        <div class="policy-rule">
+          <span class="policy-rule__icon">▸</span>
+          <span class="policy-rule__text">Paper trading only — no real money</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main ──────────────────────────────────────────────────── -->
+    <div class="main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar__left">
+          <span>ARMORGUARD</span>
+          <span class="topbar__sep">/</span>
+          <span>TRADE TERMINAL</span>
+          <span class="topbar__sep">/</span>
+          <span class="topbar__mode">PAPER MODE</span>
+        </div>
+        <div class="topbar__time" id="clock">--:--:-- UTC</div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+
+        <!-- Command input -->
+        <div>
+          <div class="section-label">Command Input</div>
+          <div class="cmd-box">
+            <div class="cmd-box__prompt">
+              <span class="cmd-box__caret">&gt;_</span>
+              <input
+                id="command-input"
+                class="cmd-box__input"
+                type="text"
+                placeholder='type a command — e.g. buy 1 NVDA'
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button id="send-btn" class="cmd-box__run" type="button">RUN</button>
+            </div>
+            <div class="cmd-box__footer">
+              <span class="cmd-hint">Presets:</span>
+              <button class="preset" data-cmd="buy 1 NVDA">buy 1 NVDA</button>
+              <button class="preset" data-cmd="buy 100 NVDA">buy 100 NVDA</button>
+              <button class="preset" data-cmd="buy 1 TSLA">buy 1 TSLA</button>
+              <button class="preset" data-cmd="sell 2 AAPL">sell 2 AAPL</button>
+              <button class="preset" data-cmd="buy 1 MSFT">buy 1 MSFT</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result output -->
+        <div id="result-container"></div>
+
+        <!-- Activity log -->
+        <div>
+          <div class="section-label">Session Log</div>
+          <table class="log-table" id="log-table">
+            <thead class="log-table__head">
+              <tr>
+                <th>#</th>
+                <th>Command</th>
+                <th>Ticker</th>
+                <th>Qty</th>
+                <th>Action</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="log-body">
+              <tr><td colspan="6" class="log-empty">no trades recorded this session</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /layout -->
+
   <script>
+    /* ── Clock ─────────────────────────────────────────────────── */
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getUTCHours()).padStart(2,'0');
+      const mm = String(now.getUTCMinutes()).padStart(2,'0');
+      const ss = String(now.getUTCSeconds()).padStart(2,'0');
+      document.getElementById('clock').textContent = `${hh}:${mm}:${ss} UTC`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    /* ── DOM refs ──────────────────────────────────────────────── */
     const input   = document.getElementById('command-input');
     const sendBtn = document.getElementById('send-btn');
     const resultC = document.getElementById('result-container');
-    const actList = document.getElementById('activity-list');
-    const chips   = document.querySelectorAll('.quick-actions__chip');
+    const logBody = document.getElementById('log-body');
+    let   rowNo   = 0;
 
-    let logEntries = [];
-
-    /* ── Quick-action chips ──────────────────────────────────────── */
-    chips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        input.value = chip.dataset.cmd;
-        input.focus();
-        submitCommand();
-      });
+    /* ── Presets ───────────────────────────────────────────────── */
+    document.querySelectorAll('.preset').forEach(p => {
+      p.addEventListener('click', () => { input.value = p.dataset.cmd; submitCommand(); });
     });
 
-    /* ── Submit on Enter ─────────────────────────────────────────── */
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') submitCommand();
-    });
-
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') submitCommand(); });
     sendBtn.addEventListener('click', submitCommand);
 
-    /* ── Core submit logic ───────────────────────────────────────── */
+    /* ── Submit ────────────────────────────────────────────────── */
     async function submitCommand() {
       const cmd = input.value.trim();
       if (!cmd) return;
 
       sendBtn.disabled = true;
-      sendBtn.innerHTML = '<span class="spinner"></span> Processing…';
+      sendBtn.innerHTML = '<span class="spinner"></span>RUN';
 
       try {
         const res  = await fetch('/trade', {
@@ -115,102 +203,106 @@
         });
         const data = await res.json();
         renderResult(data);
-        logEntries.unshift(data);
-        renderActivityLog();
+        appendLog(data, cmd);
         input.value = '';
       } catch (err) {
-        resultC.innerHTML = `<div class="result"><div class="result__header" style="color:var(--status-red)">❌ Network error — is the Flask server running?</div></div>`;
+        resultC.innerHTML = `<div class="result"><div class="result__bar" style="color:#ef4444">ERR: network error — is the server running?</div></div>`;
       } finally {
         sendBtn.disabled = false;
-        sendBtn.innerHTML = 'Execute ⚡';
+        sendBtn.innerHTML = 'RUN';
       }
     }
 
-    /* ── Render latest result card ───────────────────────────────── */
+    /* ── Render result ─────────────────────────────────────────── */
     function renderResult(d) {
-      const allowed = d.policy.allowed;
-      const badgeCls = allowed ? 'badge--allowed' : 'badge--blocked';
-      const badgeTxt = allowed ? 'ALLOWED' : 'BLOCKED';
+      const ok = d.policy.allowed;
 
       let execHTML = '';
       if (d.execution) {
         const e = d.execution;
         execHTML = `
-          <div class="result__panel result__panel--full">
-            <div class="result__panel-title"><span class="icon">📈</span> Execution Log</div>
-            <div class="exec-grid">
-              ${execItem('Order ID', e.order_id)}
-              ${execItem('Status', e.status)}
-              ${execItem('Ticker', e.ticker)}
-              ${execItem('Action', e.action)}
-              ${execItem('Qty', e.qty)}
-              ${execItem('Fill Price', '$' + e.fill_price.toFixed(2))}
-              ${execItem('Notional', '$' + e.notional.toFixed(2))}
-              ${execItem('Broker', e.broker)}
-            </div>
+          <div class="result__col result__col--full">
+            <div class="result__col-head">Execution Receipt — Alpaca Paper Broker</div>
+            <table class="exec-table">
+              <tr><td>Order ID</td><td>${esc(e.order_id)}</td></tr>
+              <tr><td>Status</td><td>${esc(e.status)}</td></tr>
+              <tr><td>Ticker</td><td>${esc(e.ticker)}</td></tr>
+              <tr><td>Action</td><td>${esc(e.action)}</td></tr>
+              <tr><td>Quantity</td><td>${e.qty}</td></tr>
+              <tr><td>Fill Price</td><td>$${e.fill_price.toFixed(2)}</td></tr>
+              <tr><td>Notional</td><td>$${e.notional.toFixed(2)}</td></tr>
+              <tr><td>Timestamp</td><td>${esc(e.timestamp)}</td></tr>
+            </table>
           </div>`;
       }
 
       resultC.innerHTML = `
+        <div class="section-label">Last Result</div>
         <div class="result">
-          <div class="result__header">
-            <span class="result__command">${escH(d.input)}</span>
-            <span class="badge ${badgeCls}"><span class="badge__dot"></span>${badgeTxt}</span>
+          <div class="result__bar">
+            <span class="result__cmd">${esc(d.input)}</span>
+            <span class="badge ${ok ? 'badge--ok' : 'badge--ng'}">
+              <span class="badge__dot"></span>${ok ? 'ALLOWED' : 'BLOCKED'}
+            </span>
           </div>
-          <div class="result__body">
-            <div class="result__panel">
-              <div class="result__panel-title"><span class="icon">🤖</span> OpenClaw Parsed Intent</div>
-              <pre class="result__json">${syntaxHL(d.intent)}</pre>
+          <div class="result__cols">
+            <div class="result__col">
+              <div class="result__col-head">OpenClaw — Parsed Intent</div>
+              <pre class="json-block">${syntaxHL(d.intent)}</pre>
             </div>
-            <div class="result__panel">
-              <div class="result__panel-title"><span class="icon">🔒</span> Policy Evaluation</div>
-              <ul class="reason-list">
-                ${d.policy.reasons.map(r =>
-                  `<li class="${allowed ? 'reason--pass' : 'reason--fail'}">${escH(r)}</li>`
-                ).join('')}
-              </ul>
+            <div class="result__col">
+              <div class="result__col-head">Policy Engine — Evaluation</div>
+              ${d.policy.reasons.map(r => `
+                <div class="policy-item policy-item--${ok ? 'ok' : 'ng'}">
+                  <span class="policy-item__icon">${ok ? '✓' : '✕'}</span>
+                  <span class="policy-item__text">${esc(r)}</span>
+                </div>`).join('')}
             </div>
             ${execHTML}
           </div>
         </div>`;
     }
 
-    function execItem(label, value) {
-      return `<div class="exec-grid__item"><div class="exec-grid__label">${label}</div><div class="exec-grid__value">${escH(String(value))}</div></div>`;
+    /* ── Append log row ────────────────────────────────────────── */
+    function appendLog(d, cmd) {
+      rowNo++;
+      const ok = d.policy.allowed;
+      const intent = d.intent;
+      const ticker = intent.ticker || '—';
+      const qty    = intent.qty    != null ? intent.qty : '—';
+      const action = intent.action || '—';
+
+      // clear empty placeholder
+      const placeholder = logBody.querySelector('.log-empty');
+      if (placeholder) placeholder.closest('tr').remove();
+
+      const tr = document.createElement('tr');
+      tr.className = 'log-table__row';
+      tr.innerHTML = `
+        <td class="log-table__ts">${String(rowNo).padStart(3,'0')}</td>
+        <td class="log-table__cmd">${esc(cmd)}</td>
+        <td>${esc(String(ticker))}</td>
+        <td>${esc(String(qty))}</td>
+        <td>${esc(String(action))}</td>
+        <td><span class="badge ${ok ? 'badge--ok' : 'badge--ng'}"><span class="badge__dot"></span>${ok ? 'ALLOWED' : 'BLOCKED'}</span></td>`;
+
+      logBody.insertBefore(tr, logBody.firstChild);
     }
 
-    /* ── Activity log ────────────────────────────────────────────── */
-    function renderActivityLog() {
-      if (!logEntries.length) return;
-      actList.className = 'activity__list';
-      actList.innerHTML = logEntries.map(d => {
-        const a = d.policy.allowed;
-        return `
-          <div class="activity__item">
-            <span class="activity__item-command">${escH(d.input)}</span>
-            <span class="activity__item-badge">
-              <span class="badge ${a ? 'badge--allowed' : 'badge--blocked'}">
-                <span class="badge__dot"></span>${a ? 'ALLOWED' : 'BLOCKED'}
-              </span>
-            </span>
-          </div>`;
-      }).join('');
-    }
-
-    /* ── Utilities ───────────────────────────────────────────────── */
-    function escH(s) {
+    /* ── Utilities ─────────────────────────────────────────────── */
+    function esc(s) {
       const d = document.createElement('div');
-      d.textContent = s;
+      d.textContent = String(s);
       return d.innerHTML;
     }
 
     function syntaxHL(obj) {
       return JSON.stringify(obj, null, 2)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
-        .replace(/: "([^"]*)"/g, ': <span class="str">"$1"</span>')
-        .replace(/: (\d+)/g, ': <span class="num">$1</span>')
-        .replace(/: (true|false)/g, ': <span class="bool">$1</span>');
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"([^"]+)":/g, '<span class="k">"$1":</span>')
+        .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
+        .replace(/: (\d+)/g,    ': <span class="n">$1</span>')
+        .replace(/: (true|false)/g, ': <span class="b">$1</span>');
     }
   </script>
 </body>
