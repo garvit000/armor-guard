@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ArmorGuard AI — Intent-aware autonomous paper trading with policy-enforced security. Built for the ArmorIQ x OpenClaw financial security track." />
+  <title>ArmorGuard AI — Secure Paper Trading</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ── Header ──────────────────────────────────────────────────── -->
+    <header class="header">
+      <div class="header__logo">
+        <div class="header__icon">🛡️</div>
+        <h1 class="header__title">ArmorGuard AI</h1>
+      </div>
+      <p class="header__sub">Intent-Aware Autonomous Paper Trading · Policy-Enforced Security</p>
+      <span class="header__badge">ArmorIQ × OpenClaw Track</span>
+    </header>
+
+    <!-- ── Architecture Flow ───────────────────────────────────────── -->
+    <section class="arch">
+      <div class="arch__title">Pipeline Architecture</div>
+      <div class="arch__flow">
+        <span class="arch__node arch__node--ui">🖥️ Flask UI</span>
+        <span class="arch__arrow">→</span>
+        <span class="arch__node arch__node--agent">🤖 OpenClaw Agent</span>
+        <span class="arch__arrow">→</span>
+        <span class="arch__node arch__node--policy">🔒 Policy Engine</span>
+        <span class="arch__arrow">→</span>
+        <span class="arch__node arch__node--trade">📈 Paper Trader</span>
+      </div>
+    </section>
+
+    <!-- ── Input ───────────────────────────────────────────────────── -->
+    <section class="input-section" id="input-section">
+      <label class="input-section__label" for="command-input">Natural Language Command</label>
+      <div class="input-section__row">
+        <input
+          id="command-input"
+          class="input-section__field"
+          type="text"
+          placeholder='e.g. "buy 1 NVDA"'
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="send-btn" class="input-section__btn" type="button">
+          Execute ⚡
+        </button>
+      </div>
+      <p class="input-section__hint">
+        Try: <code>buy 1 NVDA</code> · <code>buy 100 NVDA</code> · <code>buy 1 TSLA</code>
+      </p>
+      <div class="quick-actions">
+        <button class="quick-actions__chip" data-cmd="buy 1 NVDA">buy 1 NVDA</button>
+        <button class="quick-actions__chip" data-cmd="buy 100 NVDA">buy 100 NVDA</button>
+        <button class="quick-actions__chip" data-cmd="buy 1 TSLA">buy 1 TSLA</button>
+        <button class="quick-actions__chip" data-cmd="sell 2 AAPL">sell 2 AAPL</button>
+        <button class="quick-actions__chip" data-cmd="buy 1 MSFT">buy 1 MSFT</button>
+      </div>
+    </section>
+
+    <!-- ── Latest Result ───────────────────────────────────────────── -->
+    <div id="result-container"></div>
+
+    <!-- ── Activity Log ────────────────────────────────────────────── -->
+    <section class="activity" id="activity-section">
+      <div class="activity__title"><span class="icon">📋</span> Activity Log</div>
+      <div id="activity-list" class="activity__empty">No trades yet — enter a command above.</div>
+    </section>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <script>
+    const input   = document.getElementById('command-input');
+    const sendBtn = document.getElementById('send-btn');
+    const resultC = document.getElementById('result-container');
+    const actList = document.getElementById('activity-list');
+    const chips   = document.querySelectorAll('.quick-actions__chip');
+
+    let logEntries = [];
+
+    /* ── Quick-action chips ──────────────────────────────────────── */
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        input.value = chip.dataset.cmd;
+        input.focus();
+        submitCommand();
+      });
+    });
+
+    /* ── Submit on Enter ─────────────────────────────────────────── */
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitCommand();
+    });
+
+    sendBtn.addEventListener('click', submitCommand);
+
+    /* ── Core submit logic ───────────────────────────────────────── */
+    async function submitCommand() {
+      const cmd = input.value.trim();
+      if (!cmd) return;
+
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="spinner"></span> Processing…';
+
+      try {
+        const res  = await fetch('/trade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: cmd }),
+        });
+        const data = await res.json();
+        renderResult(data);
+        logEntries.unshift(data);
+        renderActivityLog();
+        input.value = '';
+      } catch (err) {
+        resultC.innerHTML = `<div class="result"><div class="result__header" style="color:var(--status-red)">❌ Network error — is the Flask server running?</div></div>`;
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = 'Execute ⚡';
+      }
+    }
+
+    /* ── Render latest result card ───────────────────────────────── */
+    function renderResult(d) {
+      const allowed = d.policy.allowed;
+      const badgeCls = allowed ? 'badge--allowed' : 'badge--blocked';
+      const badgeTxt = allowed ? 'ALLOWED' : 'BLOCKED';
+
+      let execHTML = '';
+      if (d.execution) {
+        const e = d.execution;
+        execHTML = `
+          <div class="result__panel result__panel--full">
+            <div class="result__panel-title"><span class="icon">📈</span> Execution Log</div>
+            <div class="exec-grid">
+              ${execItem('Order ID', e.order_id)}
+              ${execItem('Status', e.status)}
+              ${execItem('Ticker', e.ticker)}
+              ${execItem('Action', e.action)}
+              ${execItem('Qty', e.qty)}
+              ${execItem('Fill Price', '$' + e.fill_price.toFixed(2))}
+              ${execItem('Notional', '$' + e.notional.toFixed(2))}
+              ${execItem('Broker', e.broker)}
+            </div>
+          </div>`;
+      }
+
+      resultC.innerHTML = `
+        <div class="result">
+          <div class="result__header">
+            <span class="result__command">${escH(d.input)}</span>
+            <span class="badge ${badgeCls}"><span class="badge__dot"></span>${badgeTxt}</span>
+          </div>
+          <div class="result__body">
+            <div class="result__panel">
+              <div class="result__panel-title"><span class="icon">🤖</span> OpenClaw Parsed Intent</div>
+              <pre class="result__json">${syntaxHL(d.intent)}</pre>
+            </div>
+            <div class="result__panel">
+              <div class="result__panel-title"><span class="icon">🔒</span> Policy Evaluation</div>
+              <ul class="reason-list">
+                ${d.policy.reasons.map(r =>
+                  `<li class="${allowed ? 'reason--pass' : 'reason--fail'}">${escH(r)}</li>`
+                ).join('')}
+              </ul>
+            </div>
+            ${execHTML}
+          </div>
+        </div>`;
+    }
+
+    function execItem(label, value) {
+      return `<div class="exec-grid__item"><div class="exec-grid__label">${label}</div><div class="exec-grid__value">${escH(String(value))}</div></div>`;
+    }
+
+    /* ── Activity log ────────────────────────────────────────────── */
+    function renderActivityLog() {
+      if (!logEntries.length) return;
+      actList.className = 'activity__list';
+      actList.innerHTML = logEntries.map(d => {
+        const a = d.policy.allowed;
+        return `
+          <div class="activity__item">
+            <span class="activity__item-command">${escH(d.input)}</span>
+            <span class="activity__item-badge">
+              <span class="badge ${a ? 'badge--allowed' : 'badge--blocked'}">
+                <span class="badge__dot"></span>${a ? 'ALLOWED' : 'BLOCKED'}
+              </span>
+            </span>
+          </div>`;
+      }).join('');
+    }
+
+    /* ── Utilities ───────────────────────────────────────────────── */
+    function escH(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function syntaxHL(obj) {
+      return JSON.stringify(obj, null, 2)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
+        .replace(/: "([^"]*)"/g, ': <span class="str">"$1"</span>')
+        .replace(/: (\d+)/g, ': <span class="num">$1</span>')
+        .replace(/: (true|false)/g, ': <span class="bool">$1</span>');
+    }
+  </script>
+</body>
+</html>
