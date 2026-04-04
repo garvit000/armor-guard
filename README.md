@@ -1,31 +1,36 @@
-# 🛡️ ArmorGuard AI (Finalist Edition)
+# 🛡️ ArmorGuard AI (ArmorClaw Edition)
 
-> **Secure autonomous paper trading platform.**
-> Built for the **ArmorIQ × OpenClaw** financial security hackathon track.
+> **Enterprise-grade secure autonomous trading platform.**
+> Refactored to align with the official **ArmorIQ × OpenClaw** gateway architecture.
 
 ---
 
 ## 🎯 What It Does
 
-ArmorGuard AI is an advanced prototype demonstrating deterministic AI orchestration in finance. It utilizes a **Multi-Agent Workflow** to intercept natural language execution intents, assess market viability, definitively restrict dangerous behavior, and execute paper trades.
+ArmorGuard AI demonstrates a definitive secure architecture for autonomous financial AI. Instead of free-running agents, we enforce a strict **Gateway -> Plugin -> Execution** flow governed by cryptographic verification.
 
-It separates **market intelligence**, **policy enforcement**, and **trade execution** into auditable agent layers.
+Every natural language trade command is converted into an **Intent-Token** which must pass cryptographic verification before any runtime policy evaluation or trade execution can occur.
 
 ---
 
-## 🏗️ Multi-Agent Architecture
+## 🏗️ Secure Gateway Architecture
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Flask UI   │ ──▶ │ Analyst Agent│ ──▶ │  Risk Agent  │ ──▶ │ Trader Agent │
-│(4-Pane Dash)│     │(Market Intel)│     │ (ArmorIQ)    │     │ (Alpaca/DB)  │
-└─────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+┌─────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
+│  Dashboard  │ ───▶ │    OpenClaw Gateway     │ ───▶ │     ArmorIQ Plugin      │
+│  UI Console │      │ (NLP -> Signed Token)   │      │ (Verify -> Policy Gate) │
+└─────────────┘      └─────────────────────────┘      └─────────────────────────┘
+                                                                  │ (If Valid)
+┌─────────────┐      ┌─────────────────────────┐                  ▼
+│ SQLite Base │ ◀─── │      Trader Agent       │      ┌─────────────────────────┐
+│ (Audit Log) │      │  (Simulated Alpaca)     │ ◀─── │   Execution Pipeline    │
+└─────────────┘      └─────────────────────────┘      └─────────────────────────┘
 ```
 
-1. **Analyst Agent (`agents/analyst.py`)**: Checks real or mocked market bounds, calculating SMA 20, SMA 50, and RSI constraints to provide baseline recommendation scores.
-2. **Risk Agent (`agents/risk.py`)**: The policy core. Computes a continuous automated **Risk Score**. Bounds trades by Ticker Whitelist, Daily Volume Notional Limits, Max Quantities, and Market Hours.
-3. **Trader Agent (`agents/trader.py`)**: Alpaca mock execution layer maintaining an SQLite Database (`core/db.py`) of persistent portfolios.
-4. **Orchestrator (`orchestrator.py`)**: Oversees input intent parsing and conditional logic blocks (e.g. `if RSI < 30`).
+1. **OpenClaw Gateway (`orchestrator.py`)**: Intercepts natural language, coordinates with the `Analyst Agent` for market context, construct the trade intent, and signs it via `HMAC SHA256` to generate the secure **Intent-Token**.
+2. **ArmorIQ Plugin (`agents/risk.py`)**: Intercepts the generated Intent-Token. Synthetically verifies the cryptographic signature to ensure the payload wasn't tampered with mid-flight. If verified, the payload runs through strict policy limits (Market Hours, Whitelists, Exposure Ceilings).
+3. **Trader Agent**: Executes the cleared action and writes a definitive execution receipt.
+4. **Audit Timeline (`core/db.py`)**: Centralized, unalterable log tracking the micro-steps from parsing to execution for compliance visualization.
 
 ---
 
@@ -41,10 +46,10 @@ It separates **market intelligence**, **policy enforcement**, and **trade execut
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Initialize the SQLite Execution Database
+# 2. Initialize the SQLite Databases (Trade & Action AuditLogs)
 python core/db.py
 
-# 3. Run the App
+# 3. Run the Secure App
 python app.py
 ```
 
@@ -52,26 +57,25 @@ Open **http://127.0.0.1:5000** in your browser.
 
 ---
 
-## 🧪 Quick Test Scenarios
+## 🧪 Demo Scenarios
 
-Use the left-pane Terminal Chat or preset buttons:
+Use the left-pane Terminal Chat or preset buttons. **Check the bottom expandable data table for full Security Audit Timelines.**
 
-| Command | Expected Result | Why? |
+| Command | Expected Result | Reason |
 |---|---|---|
-| `buy 1 NVDA` | 🟢 **ALLOWED** | Valid asset, volume within risk limits. |
-| `buy 10 TSLA` | 🔴 **BLOCKED** | Fails Ticker Whitelist AND Max Quantity limit. Risk Score hits 100. |
-| `buy 1 AAPL outside hours` | 🔴 **BLOCKED** | Manual trigger to force a failed market-open check. |
-| `buy 1 AAPL if RSI < 30` | 🟢 **ALLOWED** | Evaluates Analyst Agent metrics before sending intent to the Risk Agent. |
+| `buy 1 NVDA` | 🟢 **ALLOWED** | Token verified. Valid asset, volume within risk limits. |
+| `buy 100 AAPL` | 🔴 **BLOCKED** | Token verified, but payload fails Plugin Runtime Policy (Max Qty + Daily Threshold). |
+| `buy 1 TSLA` | 🔴 **BLOCKED** | Token verified, but payload fails Plugin Runtime Whitelisting. |
+| `buy 1 AAPL outside hours` | 🔴 **BLOCKED** | Token verified, but plugin detects mocked outside-hours condition. |
 
 ---
 
-## 📸 Premium 4-Pane UI
+## 📸 Enterprise 4-Pane Dashboard
 
-The frontend (`templates/index.html` + `static/style.css`) is structured as a premium fintech trading client.
-- **Left**: Terminal input supporting autonomous conditional trigger logic.
-- **Center**: Lightweight Candlestick Charts & live intelligence cards.
-- **Right**: ArmorIQ console providing live evaluation metrics and a segmented Risk Meter.
-- **Bottom**: Persistent trade execution and evaluation database access.
+- **Left (Terminal)**: Command input supporting autonomous conditional trigger logic.
+- **Center (Market Intel)**: Live updating intelligence cards & lightweight embedded charts.
+- **Right (Plugin Security)**: Displays active **Intent-Token Verification hashes** and real-time ArmorIQ policy intercepts.
+- **Bottom (Compliance & Audit)**: Interactive execution log with an expanding step-by-step audit trail for each interaction.
 
 ---
 
