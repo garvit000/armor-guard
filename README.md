@@ -79,5 +79,30 @@ Use the left-pane Terminal Chat or preset buttons. **Check the bottom expandable
 
 ---
 
+## 🤖 Discord Integration
+
+ArmorGuard AI now supports a **Discord Bot UI** layer! It pipes directly into the exact same OpenClaw Gateway as the web dashboard, ensuring cryptographic token enforcement remains identical.
+
+### Discord Setup
+1. Duplicate `.env.example` to `.env`.
+2. Retrieve a Bot Token from the [Discord Developer Portal](https://discord.com/developers/applications).
+3. Add your token to the `.env` file:
+   ```env
+   DISCORD_BOT_TOKEN="your-token-here"
+   ```
+4. Start the bot:
+   ```bash
+   python bot.py
+   ```
+
+**Usage in Discord:**
+Use the `!trade` command followed by natural language.
+- `!trade buy 1 NVDA`
+- `!trade buy 100 TSLA`
+
+The bot will reply with a Rich Embed containing the generated cryptographic token limit, the parsed JSON payload, the ArmorIQ policy decision, and the trader execution receipt.
+
+---
+
 ## 📄 License
 MIT — built for the ArmorIQ × OpenClaw Hackathon Finals.
