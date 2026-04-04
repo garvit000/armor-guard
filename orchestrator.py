@@ -15,6 +15,7 @@ from base64 import b64encode
 from agents import analyst, trader
 from agents.risk import ArmorIQPlugin  # Wrap risk.py into a plugin class
 from openclaw_agent import parse_intent
+from armoriq_bridge import submit_intent_plan
 from core.db import SessionLocal, ActionHistory
 
 SECRET_KEY = b"ArmorClaw_Hackathon_Secret_Key_2026"
@@ -50,13 +51,44 @@ class OpenClawGateway:
         
         # 1. NLP Parse to Intent
         intent = parse_intent(command)
-        add_audit("OpenClaw Gateway", "Natural Language Intent Parsing", status="OK" if "error" not in intent else "ERROR")
+        parser_mode = intent.get("parser", "unknown") if isinstance(intent, dict) else "unknown"
+        add_audit(
+            "OpenClaw Gateway",
+            "Natural Language Intent Parsing",
+            status="OK" if "error" not in intent else "ERROR",
+            data=f"parser={parser_mode}",
+        )
         
         ticker = intent.get("ticker", "UNKNOWN")
         market_data = {}
         if ticker != "UNKNOWN":
             market_data = analyst.analyze(ticker)
             add_audit("Analyst Agent", f"Fetched metrics for {ticker}: RSI {market_data.get('rsi')}", status="OK")
+
+        # 1.5 Push intent plan to real ArmorIQ cloud (Intent Intelligence dashboard)
+        armoriq_result = submit_intent_plan(command, intent, market_data)
+        if armoriq_result.get("enabled") and armoriq_result.get("success"):
+            plan_hash = armoriq_result.get("plan_hash", "")
+            add_audit(
+                "ArmorIQ Cloud",
+                "Intent plan captured",
+                status="OK",
+                data=f"plan_hash={plan_hash[:16]}..." if plan_hash else "plan captured",
+            )
+        elif armoriq_result.get("enabled"):
+            add_audit(
+                "ArmorIQ Cloud",
+                "Intent plan submission failed",
+                status="ERROR",
+                data=armoriq_result.get("reason", "unknown error"),
+            )
+        else:
+            add_audit(
+                "ArmorIQ Cloud",
+                "Intent plan submission skipped",
+                status="INFO",
+                data=armoriq_result.get("reason", "not configured"),
+            )
 
         # 2. Gate Conditionals (Autonomous Triggers)
         cmd_lower = command.lower()
@@ -88,7 +120,7 @@ class OpenClawGateway:
             return OpenClawGateway._finalize_request(
                 command, intent, market_data, 
                 {"allowed": False, "risk_score": 0, "reasons": [condition_msg]}, 
-                None, audit_trail, ""
+                None, audit_trail, "", armoriq_result
             )
 
         # 3. Generate Secure Intent Token
@@ -117,11 +149,11 @@ class OpenClawGateway:
                 add_audit("Execution Layer", "Trade blocked by ArmorIQ Plugin", status="BLOCKED")
 
         return OpenClawGateway._finalize_request(
-            command, intent, market_data, policy_result, exec_result, audit_trail, token
+            command, intent, market_data, policy_result, exec_result, audit_trail, token, armoriq_result
         )
 
     @staticmethod
-    def _finalize_request(command, intent, market_data, policy_result, exec_result, audit_trail, token):
+    def _finalize_request(command, intent, market_data, policy_result, exec_result, audit_trail, token, armoriq_result=None):
         session = SessionLocal()
         try:
             log_entry = ActionHistory(
@@ -146,7 +178,8 @@ class OpenClawGateway:
             "market_data": market_data,
             "policy": policy_result,
             "execution": exec_result,
-            "audit_trail": audit_trail
+            "audit_trail": audit_trail,
+            "armoriq": armoriq_result or {}
         }
 
 def get_history():
