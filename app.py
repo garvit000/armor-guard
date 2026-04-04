@@ -8,6 +8,7 @@ for the new 4-pane UI.
 from flask import Flask, render_template, request, jsonify
 from orchestrator import OpenClawGateway, get_history, get_market_summary
 from core.db import init_db
+from agents import analyst
 
 app = Flask(__name__)
 
@@ -42,6 +43,12 @@ def trade():
 def history():
     """Return action history."""
     return jsonify(get_history())
+
+@app.route("/api/chart/<ticker>")
+def chart_data(ticker):
+    """Return historical bars for frontend lightweight charts."""
+    bars = analyst.get_historical_bars(ticker.upper(), days=30)
+    return jsonify(bars)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

@@ -184,16 +184,21 @@
     });
     const lineSeries = chart.addLineSeries({ color: '#3B82F6', lineWidth: 2 });
     
-    const initialData = [];
-    let d = new Date(); d.setDate(d.getDate() - 30);
-    let p = 150;
-    for(let i=0; i<30; i++) {
-        p = p + (Math.random() - 0.45) * 5;
-        initialData.push({ time: d.toISOString().split('T')[0], value: p });
-        d.setDate(d.getDate() + 1);
+    async function loadChart(ticker) {
+      try {
+          const res = await fetch('/api/chart/' + ticker);
+          const data = await res.json();
+          if (data && data.length > 0) {
+              lineSeries.setData(data);
+              chart.timeScale().fitContent();
+          }
+      } catch (e) {
+          console.error("Failed to load chart", e);
+      }
     }
-    lineSeries.setData(initialData);
-    chart.timeScale().fitContent();
+    
+    // Load NVDA real data by default
+    loadChart("NVDA");
 
     window.addEventListener('resize', () => { chart.resize(document.getElementById('tvchart').clientWidth, 300); });
 
@@ -235,6 +240,9 @@
         addChat(msg, 'system');
         
         updateRightPane(data);
+        if(data.intent && data.intent.ticker) {
+            loadChart(data.intent.ticker);
+        }
         fetchHistory();
         
       } catch (err) {
