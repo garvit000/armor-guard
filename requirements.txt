@@ -1,1 +1,5 @@
 flask>=3.0
+yfinance>=0.2.36
+pandas>=2.2.0
+numpy>=1.26.0
+SQLAlchemy>=2.0.25

@@ -1,309 +1,364 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="ArmorGuard AI — Intent-aware autonomous paper trading with policy-enforced security. ArmorIQ x OpenClaw financial security track." />
-  <title>ArmorGuard AI</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArmorGuard AI - Secure Architecture</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    .token-box {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        background: var(--bg-base);
+        border: 1px dashed var(--border-light);
+        padding: 0.5rem;
+        border-radius: 4px;
+        word-break: break-all;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+    .token-status {
+        font-size: 0.70rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .status-ok { color: var(--green); }
+    .status-fail { color: var(--red); }
+    .status-pending { color: var(--brand); }
+    
+    .audit-timeline {
+        padding-left: 1rem;
+        border-left: 2px solid var(--border-light);
+        margin-top: 0.5rem;
+        margin-left: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .audit-event {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        position: relative;
+        margin-bottom: 0.4rem;
+    }
+    .audit-event::before {
+        content: '';
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--border-light);
+        left: -1.25rem;
+        top: 0.2rem;
+    }
+    .audit-event.status-OK::before { background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .audit-event.status-BLOCKED::before, .audit-event.status-FAILED::before, .audit-event.status-ERROR::before { background: var(--red); box-shadow: 0 0 5px var(--red); }
+    
+    .audit-actor { font-weight: bold; color: var(--text-main); margin-right: 0.3rem;}
+    
+    .row-expand { cursor: pointer; }
+    .row-expand-content { display: none; background: var(--bg-panel-hover); }
+    .row-expand.active + .row-expand-content { display: table-row; }
+  </style>
 </head>
 <body>
 
-  <!-- ── Ticker tape ──────────────────────────────────────────── -->
-  <div class="ticker-tape">
-    <div class="ticker-tape__inner" id="tape">
-      <span class="tick"><span class="tick__sym">NVDA</span><span class="tick__val">924.79</span><span class="tick__up">+2.14%</span></span>
-      <span class="tick"><span class="tick__sym">AAPL</span><span class="tick__val">178.72</span><span class="tick__down">-0.43%</span></span>
-      <span class="tick"><span class="tick__sym">MSFT</span><span class="tick__val">420.55</span><span class="tick__up">+1.07%</span></span>
-      <span class="tick"><span class="tick__sym">SPY</span><span class="tick__val">524.30</span><span class="tick__up">+0.31%</span></span>
-      <span class="tick"><span class="tick__sym">QQQ</span><span class="tick__val">447.18</span><span class="tick__up">+0.56%</span></span>
-      <span class="tick"><span class="tick__sym">VIX</span><span class="tick__val">18.22</span><span class="tick__down">-1.90%</span></span>
-      <span class="tick"><span class="tick__sym">BTC</span><span class="tick__val">68,410</span><span class="tick__up">+3.22%</span></span>
-      <!-- duplicate for seamless loop -->
-      <span class="tick"><span class="tick__sym">NVDA</span><span class="tick__val">924.79</span><span class="tick__up">+2.14%</span></span>
-      <span class="tick"><span class="tick__sym">AAPL</span><span class="tick__val">178.72</span><span class="tick__down">-0.43%</span></span>
-      <span class="tick"><span class="tick__sym">MSFT</span><span class="tick__val">420.55</span><span class="tick__up">+1.07%</span></span>
-      <span class="tick"><span class="tick__sym">SPY</span><span class="tick__val">524.30</span><span class="tick__up">+0.31%</span></span>
-      <span class="tick"><span class="tick__sym">QQQ</span><span class="tick__val">447.18</span><span class="tick__up">+0.56%</span></span>
-      <span class="tick"><span class="tick__sym">VIX</span><span class="tick__val">18.22</span><span class="tick__down">-1.90%</span></span>
-      <span class="tick"><span class="tick__sym">BTC</span><span class="tick__val">68,410</span><span class="tick__up">+3.22%</span></span>
+  <header class="header">
+    <div class="header__brand">
+      <div class="header__logo-box">AG</div>
+      ArmorGuard AI <span style="font-size:0.7rem; color:var(--text-muted); margin-left:0.5rem; text-transform:uppercase; border:1px solid var(--border-light); padding:2px 6px; border-radius:4px;">ArmorClaw Gateway Active</span>
     </div>
+    <div class="header__status">
+      <div class="status-item"><div class="bulb on"></div>OpenClaw Gateway</div>
+      <div class="status-item"><div class="bulb on"></div>ArmorIQ Plugin</div>
+      <div class="status-item"><div class="bulb on"></div>Trader Layer</div>
+    </div>
+  </header>
+
+  <div class="app-grid">
+    <!-- LEFT PANE -->
+    <section class="panel panel-left">
+      <div class="panel-header">Terminal / Chat</div>
+      <div class="panel-body" style="display:flex; flex-direction:column;">
+        <div class="chat-history" id="chat-history">
+          <div class="chat-bubble system">ArmorClaw secure architecture initialized.</div>
+        </div>
+        
+        <div class="cmd-input-container">
+          <input type="text" id="cmd-input" class="cmd-input" placeholder="e.g. buy 1 NVDA" autocomplete="off">
+          <div class="presets">
+            <button class="preset-btn" data-cmd="buy 1 NVDA">buy 1 NVDA</button>
+            <button class="preset-btn" data-cmd="buy 100 AAPL">buy 100 AAPL</button>
+            <button class="preset-btn" data-cmd="buy 1 TSLA">buy 1 TSLA</button>
+            <button class="preset-btn" data-cmd="buy 1 AAPL outside hours">buy 1 AAPL outside hours</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER PANE -->
+    <section class="panel panel-center">
+      <div class="panel-header">Market Intelligence</div>
+      <div class="panel-body">
+        <div class="market-cards" id="market-cards">
+          <div style="color:var(--text-muted); font-size:0.8rem;">Loading live data...</div>
+        </div>
+        <div class="chart-container" id="tvchart"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANE (New Verification Step) -->
+    <section class="panel panel-right">
+      <div class="panel-header">Gateway & Plugin Security</div>
+      <div class="panel-body">
+        
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase;">Intent-Token Verification</div>
+        <div class="token-box" id="token-display">Awaiting command to generate intent payload...</div>
+        <div class="token-status status-pending" id="token-status">
+            <span id="token-status-icon">○</span> <span id="token-status-text">WAITING</span>
+        </div>
+
+        <div class="risk-meter">
+          <div class="risk-meter-title">POLICY RISK SCORE</div>
+          <div class="risk-val" id="risk-val">0</div>
+          <div class="risk-bar">
+            <div class="risk-fill" id="risk-fill"></div>
+          </div>
+        </div>
+        
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase;">ArmorIQ Runtime Policies</div>
+        <div class="policy-log-list" id="policy-logs">
+          <div class="plog-item pass" style="border-left-color:var(--text-muted);">Awaiting interception...</div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- BOTTOM PANE (Audit Logs) -->
+    <section class="panel panel-bottom">
+      <div class="panel-header">Compliance Audit Logs (Click row to expand)</div>
+      <div class="panel-body" style="padding:0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Command / Intent</th>
+              <th>Token Prefix</th>
+              <th>Status</th>
+              <th>Reason / Log</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <!-- Injected via JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 
-  <div class="layout">
-
-    <!-- ── Sidebar ─────────────────────────────────────────────── -->
-    <aside class="sidebar">
-      <div class="sidebar__brand">
-        <div class="sidebar__logo">
-          <div class="sidebar__logo-icon">AG</div>
-          ArmorGuard AI
-        </div>
-        <div class="sidebar__track">ArmorIQ × OpenClaw Track</div>
-      </div>
-
-      <div class="watchlist">
-        <div class="watchlist__title">Allowed Tickers</div>
-        <div class="watchlist__row">
-          <div>
-            <div class="watchlist__sym">NVDA</div>
-            <div class="watchlist__price">$924.79</div>
-          </div>
-          <div class="watchlist__change watchlist__change--up">+2.14%</div>
-        </div>
-        <div class="watchlist__row">
-          <div>
-            <div class="watchlist__sym">AAPL</div>
-            <div class="watchlist__price">$178.72</div>
-          </div>
-          <div class="watchlist__change watchlist__change--down">-0.43%</div>
-        </div>
-        <div class="watchlist__row">
-          <div>
-            <div class="watchlist__sym">MSFT</div>
-            <div class="watchlist__price">$420.55</div>
-          </div>
-          <div class="watchlist__change watchlist__change--up">+1.07%</div>
-        </div>
-      </div>
-
-      <div class="policy-summary">
-        <div class="policy-summary__title">Policy Rules</div>
-        <div class="policy-rule">
-          <span class="policy-rule__icon">▸</span>
-          <span class="policy-rule__text">Tickers: NVDA, AAPL, MSFT only</span>
-        </div>
-        <div class="policy-rule">
-          <span class="policy-rule__icon">▸</span>
-          <span class="policy-rule__text">Max qty per trade: 2</span>
-        </div>
-        <div class="policy-rule">
-          <span class="policy-rule__icon">▸</span>
-          <span class="policy-rule__text">Actions: BUY, SELL</span>
-        </div>
-        <div class="policy-rule">
-          <span class="policy-rule__icon">▸</span>
-          <span class="policy-rule__text">Paper trading only — no real money</span>
-        </div>
-      </div>
-    </aside>
-
-    <!-- ── Main ──────────────────────────────────────────────────── -->
-    <div class="main">
-
-      <!-- Topbar -->
-      <div class="topbar">
-        <div class="topbar__left">
-          <span>ARMORGUARD</span>
-          <span class="topbar__sep">/</span>
-          <span>TRADE TERMINAL</span>
-          <span class="topbar__sep">/</span>
-          <span class="topbar__mode">PAPER MODE</span>
-        </div>
-        <div class="topbar__time" id="clock">--:--:-- UTC</div>
-      </div>
-
-      <!-- Content -->
-      <div class="content">
-
-        <!-- Command input -->
-        <div>
-          <div class="section-label">Command Input</div>
-          <div class="cmd-box">
-            <div class="cmd-box__prompt">
-              <span class="cmd-box__caret">&gt;_</span>
-              <input
-                id="command-input"
-                class="cmd-box__input"
-                type="text"
-                placeholder='type a command — e.g. buy 1 NVDA'
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <button id="send-btn" class="cmd-box__run" type="button">RUN</button>
-            </div>
-            <div class="cmd-box__footer">
-              <span class="cmd-hint">Presets:</span>
-              <button class="preset" data-cmd="buy 1 NVDA">buy 1 NVDA</button>
-              <button class="preset" data-cmd="buy 100 NVDA">buy 100 NVDA</button>
-              <button class="preset" data-cmd="buy 1 TSLA">buy 1 TSLA</button>
-              <button class="preset" data-cmd="sell 2 AAPL">sell 2 AAPL</button>
-              <button class="preset" data-cmd="buy 1 MSFT">buy 1 MSFT</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Result output -->
-        <div id="result-container"></div>
-
-        <!-- Activity log -->
-        <div>
-          <div class="section-label">Session Log</div>
-          <table class="log-table" id="log-table">
-            <thead class="log-table__head">
-              <tr>
-                <th>#</th>
-                <th>Command</th>
-                <th>Ticker</th>
-                <th>Qty</th>
-                <th>Action</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="log-body">
-              <tr><td colspan="6" class="log-empty">no trades recorded this session</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div><!-- /content -->
-    </div><!-- /main -->
-  </div><!-- /layout -->
-
   <script>
-    /* ── Clock ─────────────────────────────────────────────────── */
-    function updateClock() {
-      const now = new Date();
-      const hh = String(now.getUTCHours()).padStart(2,'0');
-      const mm = String(now.getUTCMinutes()).padStart(2,'0');
-      const ss = String(now.getUTCSeconds()).padStart(2,'0');
-      document.getElementById('clock').textContent = `${hh}:${mm}:${ss} UTC`;
+    const input = document.getElementById('cmd-input');
+    const chatHistory = document.getElementById('chat-history');
+    const presets = document.querySelectorAll('.preset-btn');
+    const marketCardsContainer = document.getElementById('market-cards');
+    
+    // Right pane hooks
+    const tokenDisplay = document.getElementById('token-display');
+    const tokenStatusText = document.getElementById('token-status-text');
+    const tokenStatusIcon = document.getElementById('token-status-icon');
+    const tokenStatusDiv = document.getElementById('token-status');
+    const riskVal = document.getElementById('risk-val');
+    const riskFill = document.getElementById('risk-fill');
+    const policyLogs = document.getElementById('policy-logs');
+    const historyBody = document.getElementById('history-body');
+    
+    // Setup Chart
+    const chart = LightweightCharts.createChart(document.getElementById('tvchart'), {
+        layout: { background: { color: 'transparent' }, textColor: '#A1A1AA' },
+        grid: { vertLines: { color: '#27272A' }, horzLines: { color: '#27272A' } },
+        width: document.getElementById('tvchart').clientWidth,
+        height: 300,
+    });
+    const lineSeries = chart.addLineSeries({ color: '#3B82F6', lineWidth: 2 });
+    
+    const initialData = [];
+    let d = new Date(); d.setDate(d.getDate() - 30);
+    let p = 150;
+    for(let i=0; i<30; i++) {
+        p = p + (Math.random() - 0.45) * 5;
+        initialData.push({ time: d.toISOString().split('T')[0], value: p });
+        d.setDate(d.getDate() + 1);
     }
-    updateClock();
-    setInterval(updateClock, 1000);
+    lineSeries.setData(initialData);
+    chart.timeScale().fitContent();
 
-    /* ── DOM refs ──────────────────────────────────────────────── */
-    const input   = document.getElementById('command-input');
-    const sendBtn = document.getElementById('send-btn');
-    const resultC = document.getElementById('result-container');
-    const logBody = document.getElementById('log-body');
-    let   rowNo   = 0;
+    window.addEventListener('resize', () => { chart.resize(document.getElementById('tvchart').clientWidth, 300); });
 
-    /* ── Presets ───────────────────────────────────────────────── */
-    document.querySelectorAll('.preset').forEach(p => {
-      p.addEventListener('click', () => { input.value = p.dataset.cmd; submitCommand(); });
+    presets.forEach(btn => {
+      btn.addEventListener('click', () => {
+        input.value = btn.dataset.cmd;
+        submitCmd();
+      });
     });
 
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') submitCommand(); });
-    sendBtn.addEventListener('click', submitCommand);
+    input.addEventListener('keydown', e => { if(e.key === 'Enter') submitCmd(); });
 
-    /* ── Submit ────────────────────────────────────────────────── */
-    async function submitCommand() {
+    async function submitCmd() {
       const cmd = input.value.trim();
-      if (!cmd) return;
-
-      sendBtn.disabled = true;
-      sendBtn.innerHTML = '<span class="spinner"></span>RUN';
-
+      if(!cmd) return;
+      input.value = '';
+      addChat(cmd, 'user');
+      
+      // Reset Token UI
+      tokenDisplay.innerText = "Generating cryptographic payload...";
+      tokenStatusDiv.className = "token-status status-pending";
+      tokenStatusText.innerText = "GENERATING...";
+      tokenStatusIcon.innerText = "⟳";
+      
       try {
-        const res  = await fetch('/trade', {
+        const res = await fetch('/trade', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ command: cmd }),
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({command: cmd})
         });
         const data = await res.json();
-        renderResult(data);
-        appendLog(data, cmd);
-        input.value = '';
+        
+        let msg = '';
+        if(data.policy && data.policy.allowed) {
+            msg = `Trade Executed: Order ID ${data.execution.order_id}`;
+        } else {
+            msg = `Gateway Blocked: ${data.policy.reasons[0]}`;
+        }
+        addChat(msg, 'system');
+        
+        updateRightPane(data);
+        fetchHistory();
+        
       } catch (err) {
-        resultC.innerHTML = `<div class="result"><div class="result__bar" style="color:#ef4444">ERR: network error — is the server running?</div></div>`;
-      } finally {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = 'RUN';
+        addChat('Error connecting to Server.', 'system');
       }
     }
 
-    /* ── Render result ─────────────────────────────────────────── */
-    function renderResult(d) {
-      const ok = d.policy.allowed;
+    function addChat(text, type) {
+      const b = document.createElement('div');
+      b.className = `chat-bubble ${type}`;
+      b.innerText = text;
+      chatHistory.appendChild(b);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
 
-      let execHTML = '';
-      if (d.execution) {
-        const e = d.execution;
-        execHTML = `
-          <div class="result__col result__col--full">
-            <div class="result__col-head">Execution Receipt — Alpaca Paper Broker</div>
-            <table class="exec-table">
-              <tr><td>Order ID</td><td>${esc(e.order_id)}</td></tr>
-              <tr><td>Status</td><td>${esc(e.status)}</td></tr>
-              <tr><td>Ticker</td><td>${esc(e.ticker)}</td></tr>
-              <tr><td>Action</td><td>${esc(e.action)}</td></tr>
-              <tr><td>Quantity</td><td>${e.qty}</td></tr>
-              <tr><td>Fill Price</td><td>$${e.fill_price.toFixed(2)}</td></tr>
-              <tr><td>Notional</td><td>$${e.notional.toFixed(2)}</td></tr>
-              <tr><td>Timestamp</td><td>${esc(e.timestamp)}</td></tr>
-            </table>
-          </div>`;
+    function updateRightPane(data) {
+      if(!data.policy) return;
+      
+      // Token updates
+      if (data.token) {
+        tokenDisplay.innerText = data.token;
+        // Check audit trail to see if plugin cryptographic verify passed
+        const verified = data.audit_trail.some(a => a.event === "Cryptographic Verification" && a.status === "OK");
+        if (verified) {
+           tokenStatusDiv.className = "token-status status-ok";
+           tokenStatusText.innerText = "TOKEN VERIFIED BY PLUGIN";
+           tokenStatusIcon.innerText = "✔";
+        } else {
+           tokenStatusDiv.className = "token-status status-fail";
+           tokenStatusText.innerText = "TOKEN VERIFICATION FAILED";
+           tokenStatusIcon.innerText = "✖";
+        }
+      } else {
+        tokenDisplay.innerText = "NO TOKEN GENERATED";
+        tokenStatusDiv.className = "token-status status-fail";
+        tokenStatusText.innerText = "GENERATION FAILED";
+        tokenStatusIcon.innerText = "✖";
       }
 
-      resultC.innerHTML = `
-        <div class="section-label">Last Result</div>
-        <div class="result">
-          <div class="result__bar">
-            <span class="result__cmd">${esc(d.input)}</span>
-            <span class="badge ${ok ? 'badge--ok' : 'badge--ng'}">
-              <span class="badge__dot"></span>${ok ? 'ALLOWED' : 'BLOCKED'}
-            </span>
-          </div>
-          <div class="result__cols">
-            <div class="result__col">
-              <div class="result__col-head">OpenClaw — Parsed Intent</div>
-              <pre class="json-block">${syntaxHL(d.intent)}</pre>
-            </div>
-            <div class="result__col">
-              <div class="result__col-head">Policy Engine — Evaluation</div>
-              ${d.policy.reasons.map(r => `
-                <div class="policy-item policy-item--${ok ? 'ok' : 'ng'}">
-                  <span class="policy-item__icon">${ok ? '✓' : '✕'}</span>
-                  <span class="policy-item__text">${esc(r)}</span>
-                </div>`).join('')}
-            </div>
-            ${execHTML}
-          </div>
-        </div>`;
+      // Risk score updates
+      const rScore = data.policy.risk_score;
+      riskVal.innerText = rScore;
+      riskFill.style.width = rScore + '%';
+      if(rScore < 40) riskFill.style.background = 'var(--green)';
+      else if(rScore < 70) riskFill.style.background = 'var(--brand)';
+      else riskFill.style.background = 'var(--red)';
+      
+      // Policy logs
+      policyLogs.innerHTML = '';
+      data.policy.reasons.forEach(r => {
+        policyLogs.innerHTML += `<div class="plog-item ${data.policy.allowed ? 'pass' : 'fail'}">${r}</div>`;
+      });
     }
 
-    /* ── Append log row ────────────────────────────────────────── */
-    function appendLog(d, cmd) {
-      rowNo++;
-      const ok = d.policy.allowed;
-      const intent = d.intent;
-      const ticker = intent.ticker || '—';
-      const qty    = intent.qty    != null ? intent.qty : '—';
-      const action = intent.action || '—';
-
-      // clear empty placeholder
-      const placeholder = logBody.querySelector('.log-empty');
-      if (placeholder) placeholder.closest('tr').remove();
-
-      const tr = document.createElement('tr');
-      tr.className = 'log-table__row';
-      tr.innerHTML = `
-        <td class="log-table__ts">${String(rowNo).padStart(3,'0')}</td>
-        <td class="log-table__cmd">${esc(cmd)}</td>
-        <td>${esc(String(ticker))}</td>
-        <td>${esc(String(qty))}</td>
-        <td>${esc(String(action))}</td>
-        <td><span class="badge ${ok ? 'badge--ok' : 'badge--ng'}"><span class="badge__dot"></span>${ok ? 'ALLOWED' : 'BLOCKED'}</span></td>`;
-
-      logBody.insertBefore(tr, logBody.firstChild);
+    async function fetchMarket() {
+      try {
+        const res = await fetch('/market');
+        const data = await res.json();
+        let html = '';
+        Object.keys(data).forEach(t => {
+            const m = data[t];
+            if(m.error) return;
+            let bc = m.recommendation === "BUY" ? 'rec-buy' : (m.recommendation === "SELL" ? 'rec-sell' : 'rec-hold');
+            html += `
+            <div class="market-card">
+              <div class="mc-header"><span>${t}</span><span class="rec-badge ${bc}">${m.recommendation}</span></div>
+              <div class="mc-price">$${m.price.toFixed(2)}</div>
+              <div class="mc-stats">
+                <div>RSI <span class="mc-stat-val">${m.rsi.toFixed(1)}</span></div>
+                <div>Conf <span class="mc-stat-val">${m.confidence}%</span></div>
+              </div>
+            </div>`;
+        });
+        if(html) marketCardsContainer.innerHTML = html;
+      } catch(e) {}
     }
 
-    /* ── Utilities ─────────────────────────────────────────────── */
-    function esc(s) {
-      const d = document.createElement('div');
-      d.textContent = String(s);
-      return d.innerHTML;
+    async function fetchHistory() {
+      try {
+        const res = await fetch('/history');
+        const data = await res.json();
+        let html = '';
+        
+        data.forEach(row => {
+          const d = new Date(row.timestamp);
+          const timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+          const statusCls = row.status === 'ALLOWED' ? 'badge allow' : 'badge block';
+          
+          let prefix = row.token ? row.token.substring(0, 16) + '...' : '—';
+          let rsn = row.reasons ? row.reasons.join(' ') : '';
+          
+          html += `
+          <tr class="row-expand" onclick="this.classList.toggle('active')">
+            <td style="color:var(--text-muted)">${timeStr}</td>
+            <td>${row.command}</td>
+            <td><span style="font-family:var(--font-mono); color:var(--brand);">${prefix}</span></td>
+            <td><span class="${statusCls}">${row.status}</span></td>
+            <td style="color:var(--text-muted); font-size:0.7rem; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${rsn}
+            </td>
+          </tr>
+          <tr class="row-expand-content">
+            <td colspan="5" style="padding:0 1rem;">
+                <div class="audit-timeline">`;
+          
+          if(row.audit_trail) {
+              row.audit_trail.forEach(a => {
+                 let t = new Date(a.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                 html += `<div class="audit-event status-${a.status}">
+                            <span style="color:var(--text-muted); margin-right:0.5rem">${t}</span>
+                            <span class="audit-actor">[${a.actor}]</span> 
+                            ${a.event} ${a.data ? '— <span style="font-family:var(--font-mono); color:var(--brand)">'+a.data+'</span>' : ''}
+                          </div>`; 
+              });
+          }
+          html += `</div></td></tr>`;
+        });
+        historyBody.innerHTML = html;
+      } catch(e) {}
     }
 
-    function syntaxHL(obj) {
-      return JSON.stringify(obj, null, 2)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-        .replace(/"([^"]+)":/g, '<span class="k">"$1":</span>')
-        .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
-        .replace(/: (\d+)/g,    ': <span class="n">$1</span>')
-        .replace(/: (true|false)/g, ': <span class="b">$1</span>');
-    }
+    fetchMarket();
+    fetchHistory();
+    setInterval(fetchMarket, 30000);
   </script>
 </body>
 </html>
