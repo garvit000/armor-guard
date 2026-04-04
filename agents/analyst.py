@@ -65,3 +65,36 @@ def analyze(ticker: str) -> dict:
         }
     except Exception as e:
         return {"error": f"Alpaca API Market Data Failed: {str(e)}"}
+
+def get_historical_bars(ticker: str, days: int = 30) -> list:
+    """Fetch historical daily bars for charting"""
+    key_id = os.getenv("ALPACA_API_KEY", "")
+    secret_key = os.getenv("ALPACA_API_SECRET", "")
+    if not key_id or not secret_key: return []
+    
+    headers = {
+        "APCA-API-KEY-ID": key_id,
+        "APCA-API-SECRET-KEY": secret_key,
+        "accept": "application/json"
+    }
+    
+    import datetime
+    end_date = datetime.datetime.now(datetime.timezone.utc)
+    start_date = end_date - datetime.timedelta(days=days + 15)
+    
+    url = f"https://data.alpaca.markets/v2/stocks/{ticker}/bars?timeframe=1Day&start={start_date.strftime('%Y-%m-%d')}&end={end_date.strftime('%Y-%m-%d')}&limit={days}"
+    
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            bars = response.json().get("bars", [])
+            formatted = []
+            for b in bars:
+                formatted.append({
+                    "time": b["t"].split("T")[0],
+                    "value": float(b["c"])
+                })
+            return formatted
+    except Exception:
+        pass
+    return []
