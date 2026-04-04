@@ -7,9 +7,9 @@ trade commands into a strict JSON intent payload.
 
 import os
 import json
-import google.generativeai as genai
-
+from google import genai
 from dotenv import load_dotenv
+
 load_dotenv()
 
 def parse_intent(command: str) -> dict:
@@ -22,11 +22,8 @@ def parse_intent(command: str) -> dict:
     if not _GEMINI_API_KEY or _GEMINI_API_KEY == "your_gemini_api_key_here":
          return {"error": "GEMINI_API_KEY is missing. Production mode requires a real API key."}
 
-    genai.configure(api_key=_GEMINI_API_KEY)
+    client = genai.Client(api_key=_GEMINI_API_KEY)
 
-    # Use Gemini 1.5 Flash for fast NLP
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
     prompt = f"""
     You are an intent parser for a financial trading gateway.
     Extract the trade intent from the following command: "{command}"
@@ -42,7 +39,10 @@ def parse_intent(command: str) -> dict:
     """
     
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
         # Clean any potential markdown formatting the LLM sneaks in
         text = response.text.strip().replace("```json", "").replace("```", "")
         intent = json.loads(text)
