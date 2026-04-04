@@ -40,8 +40,16 @@ class ActionHistory(Base):
     audit_trail = Column(String) # JSON list of timeline events [{time, actor, event, status}]
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+import os
+
 # Setup Engine
-engine = create_engine('sqlite:///armor.db', echo=False)
+# Vercel's filesystem is read-only except for /tmp.
+if os.environ.get("VERCEL"):
+    db_url = 'sqlite:////tmp/armor.db'
+else:
+    db_url = 'sqlite:///armor.db'
+
+engine = create_engine(db_url, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
