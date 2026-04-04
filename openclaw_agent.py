@@ -1,70 +1,62 @@
 """
-OpenClaw Intent-Parser Agent
-=============================
-Simulates an OpenClaw autonomous agent that converts natural-language
-trading commands into structured JSON intents.
-
-In a production deployment this module would call the OpenClaw SDK;
-here we use deterministic NLP parsing so the demo runs offline with
-zero API keys.
+OpenClaw Intent Parser — ArmorGuard AI
+======================================
+Uses Google Gemini API to dynamically parse natural language 
+trade commands into a strict JSON intent payload.
 """
 
-import re
-from typing import Optional
+import os
+import json
+import google.generativeai as genai
 
+from dotenv import load_dotenv
+load_dotenv()
 
-# ── Supported action verbs ────────────────────────────────────────────
-_ACTION_MAP = {
-    "buy": "BUY",
-    "purchase": "BUY",
-    "acquire": "BUY",
-    "long": "BUY",
-    "sell": "SELL",
-    "short": "SELL",
-    "dump": "SELL",
-    "liquidate": "SELL",
-}
-
-# Regex: optional action, quantity, ticker
-_PATTERN = re.compile(
-    r"(?P<action>" + "|".join(_ACTION_MAP.keys()) + r")"
-    r"\s+"
-    r"(?P<qty>\d+)"
-    r"\s+"
-    r"(?P<ticker>[A-Za-z]+)",
-    re.IGNORECASE,
-)
-
-
-def parse_intent(user_input: str) -> dict:
+def parse_intent(command: str) -> dict:
     """
-    Parse a natural-language trading command into a structured intent.
-
-    Returns
-    -------
-    dict
-        On success:  {"ticker": "NVDA", "qty": 1, "action": "BUY"}
-        On failure:  {"error": "Could not parse intent from input."}
+    Parse natural language into a JSON intent.
+    { "action": "BUY"|"SELL", "qty": int, "ticker": "AAA" }
     """
-    user_input = user_input.strip()
-    match = _PATTERN.search(user_input)
+    _GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    
+    if not _GEMINI_API_KEY or _GEMINI_API_KEY == "your_gemini_api_key_here":
+         return {"error": "GEMINI_API_KEY is missing. Production mode requires a real API key."}
 
-    if not match:
-        return {"error": "Could not parse intent from input."}
+    genai.configure(api_key=_GEMINI_API_KEY)
 
-    action_raw = match.group("action").lower()
-    qty = int(match.group("qty"))
-    ticker = match.group("ticker").upper()
+    # Use Gemini 1.5 Flash for fast NLP
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    prompt = f"""
+    You are an intent parser for a financial trading gateway.
+    Extract the trade intent from the following command: "{command}"
+    
+    Rules:
+    - Action MUST be exactly "BUY" or "SELL".
+    - Ticker MUST be the stock ticker symbol in uppercase (e.g., AAPL).
+    - Qty MUST be an integer representing the volume. If not specified, default to 1.
+    - Return ONLY valid JSON, nothing else. DO NOT wrap the json in markdown blocks like ```json.
+    
+    Example input: "I want to grab 50 shares of nvidia"
+    Output: {{"action": "BUY", "qty": 50, "ticker": "NVDA"}}
+    """
+    
+    try:
+        response = model.generate_content(prompt)
+        # Clean any potential markdown formatting the LLM sneaks in
+        text = response.text.strip().replace("```json", "").replace("```", "")
+        intent = json.loads(text)
+        
+        # Ensure mandatory keys
+        if "action" not in intent or "ticker" not in intent or "qty" not in intent:
+             return {"error": "Gemini failed to extract all required fields (action, ticker, qty)."}
+             
+        # Normalize
+        intent["action"] = str(intent["action"]).upper()
+        intent["ticker"] = str(intent["ticker"]).upper()
+        intent["qty"] = int(intent["qty"])
+        
+        return intent
 
-    return {
-        "ticker": ticker,
-        "qty": qty,
-        "action": _ACTION_MAP.get(action_raw, "BUY"),
-    }
-
-
-# ── Quick smoke test ──────────────────────────────────────────────────
-if __name__ == "__main__":
-    tests = ["buy 1 NVDA", "sell 5 AAPL", "purchase 2 MSFT", "hello world"]
-    for t in tests:
-        print(f"{t!r:30s} → {parse_intent(t)}")
+    except Exception as e:
+        return {"error": f"LLM Parsing failed: {str(e)}"}
