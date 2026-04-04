@@ -23,7 +23,7 @@ def parse_intent(command: str) -> dict:
          return {"error": "GEMINI_API_KEY is missing. Production mode requires a real API key."}
 
     client = genai.Client(api_key=_GEMINI_API_KEY)
-
+    
     prompt = f"""
     You are an intent parser for a financial trading gateway.
     Extract the trade intent from the following command: "{command}"
