@@ -1,152 +1,79 @@
-# 🛡️ ArmorGuard AI
+# 🛡️ ArmorGuard AI (Finalist Edition)
 
-> **Intent-aware autonomous paper trading with policy-enforced security.**
+> **Secure autonomous paper trading platform.**
 > Built for the **ArmorIQ × OpenClaw** financial security hackathon track.
 
 ---
 
 ## 🎯 What It Does
 
-ArmorGuard AI is a prototype that demonstrates how an autonomous AI agent can safely execute financial trades by separating **intent understanding**, **policy enforcement**, and **trade execution** into distinct, auditable layers.
+ArmorGuard AI is an advanced prototype demonstrating deterministic AI orchestration in finance. It utilizes a **Multi-Agent Workflow** to intercept natural language execution intents, assess market viability, definitively restrict dangerous behavior, and execute paper trades.
 
-A user types a natural-language trading command (e.g. `"buy 1 NVDA"`), and the system:
-
-1. **Parses** the intent using an OpenClaw agent
-2. **Evaluates** the parsed intent against a deterministic policy engine
-3. **Executes** (or blocks) a simulated paper trade via Alpaca
-
-Every decision is logged with full reasoning visibility.
+It separates **market intelligence**, **policy enforcement**, and **trade execution** into auditable agent layers.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Multi-Agent Architecture
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Flask UI  │ ──▶ │  OpenClaw Agent  │ ──▶ │ Policy Engine│ ──▶ │ Paper Trader │
-│ (index.html)│     │ (intent parser)  │     │ (policy.py)  │     │ (trader.py)  │
-└─────────────┘     └──────────────────┘     └──────────────┘     └──────────────┘
-     User               Structured               ALLOW /              Simulated
-   Natural             JSON Intent              BLOCK with            Alpaca Fill
-   Language                                      Reasons
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Flask UI   │ ──▶ │ Analyst Agent│ ──▶ │  Risk Agent  │ ──▶ │ Trader Agent │
+│(4-Pane Dash)│     │(Market Intel)│     │ (ArmorIQ)    │     │ (Alpaca/DB)  │
+└─────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
 ```
 
-### File Map
-
-| File | Purpose |
-|---|---|
-| `app.py` | Flask web server — wires all layers together |
-| `openclaw_agent.py` | OpenClaw intent-parser agent — NL → JSON |
-| `policy.py` | Deterministic policy engine — whitelist + quantity cap |
-| `trader.py` | Simulated Alpaca paper-trade executor |
-| `templates/index.html` | Dark trading dashboard UI |
-| `static/style.css` | Premium CSS design system |
+1. **Analyst Agent (`agents/analyst.py`)**: Checks real or mocked market bounds, calculating SMA 20, SMA 50, and RSI constraints to provide baseline recommendation scores.
+2. **Risk Agent (`agents/risk.py`)**: The policy core. Computes a continuous automated **Risk Score**. Bounds trades by Ticker Whitelist, Daily Volume Notional Limits, Max Quantities, and Market Hours.
+3. **Trader Agent (`agents/trader.py`)**: Alpaca mock execution layer maintaining an SQLite Database (`core/db.py`) of persistent portfolios.
+4. **Orchestrator (`orchestrator.py`)**: Oversees input intent parsing and conditional logic blocks (e.g. `if RSI < 30`).
 
 ---
 
-## 🤖 How OpenClaw Is Used
-
-The `openclaw_agent.py` module acts as the **OpenClaw autonomous agent** layer:
-
-- Takes arbitrary natural-language input from the user
-- Converts it into a **structured JSON intent**:
-  ```json
-  { "ticker": "NVDA", "qty": 1, "action": "BUY" }
-  ```
-- Supports action verbs: `buy`, `purchase`, `acquire`, `sell`, `short`, `dump`, etc.
-- Returns a clear error if the input cannot be parsed
-
-In a production deployment, this module would call the OpenClaw SDK for more sophisticated NLP. For the hackathon prototype, we use deterministic regex-based parsing to ensure reliable offline demos.
-
----
-
-## 🔒 Policy Engine Rules
-
-The policy engine (`policy.py`) enforces three deterministic rules:
-
-| # | Rule | Detail |
-|---|---|---|
-| 1 | **Ticker Whitelist** | Only `NVDA`, `AAPL`, `MSFT` are allowed |
-| 2 | **Quantity Cap** | Maximum **2 shares** per trade |
-| 3 | **Action Validation** | Only `BUY` and `SELL` are recognised |
-
-If **any** rule is violated, the trade is **BLOCKED** and the exact violation reason(s) are returned to the UI. Trades only execute when **all** rules pass.
-
----
-
-## 🚀 Setup
+## 🚀 Setup & Execution
 
 ### Prerequisites
-
 - Python 3.10+
 - pip
 
 ### Install & Run
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/armor-guard.git
-cd armor-guard
-
-# 2. Create a virtual environment (optional but recommended)
-python -m venv venv
-source venv/bin/activate   # Linux/Mac
-venv\Scripts\activate      # Windows
-
-# 3. Install dependencies
+# 1. Install dependencies
 pip install -r requirements.txt
 
-# 4. Run the app
+# 2. Initialize the SQLite Execution Database
+python core/db.py
+
+# 3. Run the App
 python app.py
 ```
 
-Open **http://localhost:5000** in your browser.
+Open **http://127.0.0.1:5000** in your browser.
 
 ---
 
-## 🧪 Demo Test Cases
+## 🧪 Quick Test Scenarios
 
-| # | Command | Expected | Reason |
-|---|---|---|---|
-| 1 | `buy 1 NVDA` | ✅ **ALLOWED** | Valid ticker, quantity ≤ 2 |
-| 2 | `buy 100 NVDA` | 🚫 **BLOCKED** | Quantity 100 exceeds max of 2 |
-| 3 | `buy 1 TSLA` | 🚫 **BLOCKED** | TSLA not in allowed ticker list |
-| 4 | `sell 2 AAPL` | ✅ **ALLOWED** | Valid ticker, quantity ≤ 2, valid action |
-| 5 | `buy 1 MSFT` | ✅ **ALLOWED** | Valid ticker, quantity ≤ 2 |
+Use the left-pane Terminal Chat or preset buttons:
 
-### Quick Demo Flow
-
-1. Open the dashboard
-2. Click the **quick-action chips** or type a command
-3. Observe:
-   - 🟢 **Green ALLOWED badge** + full execution log for valid trades
-   - 🔴 **Red BLOCKED badge** + exact violation reasons for blocked trades
-4. All trades appear in the **Activity Log** panel
+| Command | Expected Result | Why? |
+|---|---|---|
+| `buy 1 NVDA` | 🟢 **ALLOWED** | Valid asset, volume within risk limits. |
+| `buy 10 TSLA` | 🔴 **BLOCKED** | Fails Ticker Whitelist AND Max Quantity limit. Risk Score hits 100. |
+| `buy 1 AAPL outside hours` | 🔴 **BLOCKED** | Manual trigger to force a failed market-open check. |
+| `buy 1 AAPL if RSI < 30` | 🟢 **ALLOWED** | Evaluates Analyst Agent metrics before sending intent to the Risk Agent. |
 
 ---
 
-## 📸 Screenshots
+## 📸 Premium 4-Pane UI
 
-The dashboard features:
-
-- **Pipeline architecture** diagram at the top
-- **Natural language input** with quick-action chips
-- **Syntax-highlighted JSON** showing the parsed OpenClaw intent
-- **Policy evaluation** with pass/fail reasons
-- **Execution log** grid for allowed trades
-- **Activity log** tracking all commands
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend:** Python / Flask
-- **Agent Layer:** OpenClaw-style intent parser
-- **Frontend:** Vanilla HTML/CSS/JS
-- **Design:** Dark mode, glassmorphism, Inter + JetBrains Mono fonts
+The frontend (`templates/index.html` + `static/style.css`) is structured as a premium fintech trading client.
+- **Left**: Terminal input supporting autonomous conditional trigger logic.
+- **Center**: Lightweight Candlestick Charts & live intelligence cards.
+- **Right**: ArmorIQ console providing live evaluation metrics and a segmented Risk Meter.
+- **Bottom**: Persistent trade execution and evaluation database access.
 
 ---
 
 ## 📄 License
-
-MIT — built for the ArmorIQ × OpenClaw hackathon.
+MIT — built for the ArmorIQ × OpenClaw Hackathon Finals.
